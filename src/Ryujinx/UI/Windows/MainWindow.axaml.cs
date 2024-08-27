@@ -129,6 +129,12 @@ namespace Ryujinx.Ava.UI.Windows
         private void IsActiveChanged(bool obj)
         {
             ViewModel.IsActive = obj;
+            Logger.Info?.Print(LogClass.Application, $"neoe: active:{obj}");
+            if (obj) { //neoe
+            	ViewModel.AppHost?.Resume();
+            }else{
+            	ViewModel.AppHost?.Pause();
+            }
         }
 
         private void OnScalingChanged(object sender, EventArgs e)
