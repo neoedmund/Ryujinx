@@ -43,6 +43,8 @@ using Silk.NET.Vulkan;
 using SkiaSharp;
 using SPB.Graphics.Vulkan;
 using System;
+using System.Net;
+using System.Net.Sockets;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -797,6 +799,7 @@ namespace Ryujinx.Ava
 
         internal void Resume()
         {
+        PauseNotify_send(0x22);
             Device?.System.TogglePauseEmulation(false);
 
             _viewModel.IsPaused = false;
@@ -806,12 +809,33 @@ namespace Ryujinx.Ava
 
         internal void Pause()
         {
+        	PauseNotify_send(0x11);
             Device?.System.TogglePauseEmulation(true);
 
             _viewModel.IsPaused = true;
             _viewModel.Title = TitleHelper.ActiveApplicationTitle(Device?.Processes.ActiveApplication, Program.Version, LocaleManager.Instance[LocaleKeys.Paused]);
             Logger.Info?.Print(LogClass.Emulation, "Emulation was paused");
         }
+
+        // #include "PauseNotify_send.cs"
+void PauseNotify_send ( byte code ) {
+	try {
+		IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
+		IPEndPoint ipEndPoint = new IPEndPoint(ipAddress, 12591 ) ;	
+	
+		using Socket client = new ( AddressFamily.InterNetwork,
+			SocketType . Stream ,			ProtocolType . Tcp ) ;
+	
+		client . Connect ( ipEndPoint ) ;
+		var messageBytes = new byte [ 1 ] ;
+		messageBytes [ 0 ] = code ;
+		client . Send ( messageBytes , SocketFlags . None ) ;
+	
+		client . Shutdown ( SocketShutdown . Both ) ;
+	} catch (Exception e) {
+		Console.WriteLine($"socket error: {e.Message}");
+	}
+}
 
         private void InitializeSwitchInstance()
         {
